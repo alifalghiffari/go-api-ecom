@@ -1,5 +1,3 @@
-# go-api-ecom
- 
 # thesis project
 
 ## Requirements for Apis
