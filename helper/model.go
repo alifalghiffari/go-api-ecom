@@ -5,6 +5,15 @@ import (
 	"project-workshop/go-api-ecom/model/web"
 )
 
+func ToUserResponse(user domain.User) web.UserResponse {
+	return web.UserResponse{
+		Id:       user.Id,
+		Username: user.Username,
+		Email:    user.Email,
+		Role:     user.Role,
+	}
+}
+
 func ToCategoryResponse(category domain.Category) web.CategoryResponse {
 	return web.CategoryResponse{
 		Id:   category.Id,
@@ -21,6 +30,14 @@ func ToProductResponse(product domain.Product) web.ProductResponse {
 		Quantity:    product.Quantity,
 		CategoryId:  product.CategoryId,
 	}
+}
+
+func ToUserResponses(users []domain.User) []web.UserResponse {
+	var userResponses []web.UserResponse
+	for _, user := range users {
+		userResponses = append(userResponses, ToUserResponse(user))
+	}
+	return userResponses
 }
 
 func ToCategoryResponses(categories []domain.Category) []web.CategoryResponse {

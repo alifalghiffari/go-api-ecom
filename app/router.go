@@ -7,7 +7,7 @@ import (
 	"github.com/julienschmidt/httprouter"
 )
 
-func NewRouter(categoryController controller.CategoryController, productController controller.ProductController) *httprouter.Router {
+func NewRouter(categoryController controller.CategoryController, productController controller.ProductController, usercontroller controller.UserController) *httprouter.Router {
 	router := httprouter.New()
 
 	router.GET("/api/categories", categoryController.FindAll)
@@ -21,6 +21,11 @@ func NewRouter(categoryController controller.CategoryController, productControll
 	router.POST("/api/products", productController.Create)
 	router.PUT("/api/products/:productId", productController.Update)
 	router.DELETE("/api/products/:productId", productController.Delete)
+
+	router.POST("/api/users", usercontroller.Create)
+	router.PUT("/api/users/:userId", usercontroller.Update)
+	router.DELETE("/api/users/:userId", usercontroller.Delete)
+	router.GET("/api/users/:userId", usercontroller.FindById)
 
 	router.PanicHandler = exception.ErrorHandler
 

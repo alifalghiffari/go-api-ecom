@@ -26,7 +26,11 @@ func main() {
 	productService := service.NewProductService(productRepository, db, validate)
 	productController := controller.NewProductController(productService)
 
-	router := app.NewRouter(categoryController, productController)
+	userRepository := repository.NewUserRepository()
+	userService := service.NewUserService(userRepository, db, validate)
+	userController := controller.NewUserController(userService)
+
+	router := app.NewRouter(categoryController, productController, userController)
 
 	fmt.Println("Server listening on port http://localhost:3000/")
 
