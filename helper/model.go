@@ -5,19 +5,20 @@ import (
 	"project-workshop/go-api-ecom/model/web"
 )
 
-func ToUserResponse(user domain.User) web.UserResponse {
-	return web.UserResponse{
-		Id:       user.Id,
-		Username: user.Username,
-		Email:    user.Email,
-		Role:     user.Role,
-	}
-}
-
 func ToCategoryResponse(category domain.Category) web.CategoryResponse {
 	return web.CategoryResponse{
 		Id:   category.Id,
 		Name: category.Name,
+	}
+}
+
+func ToUserResponse(user domain.User) web.UserResponse {
+	return web.UserResponse{
+		Id:       user.Id,
+		Username: user.Username,
+		Password: user.Password,
+		Email:    user.Email,
+		Role:     user.Role,
 	}
 }
 
@@ -32,20 +33,20 @@ func ToProductResponse(product domain.Product) web.ProductResponse {
 	}
 }
 
-func ToUserResponses(users []domain.User) []web.UserResponse {
-	var userResponses []web.UserResponse
-	for _, user := range users {
-		userResponses = append(userResponses, ToUserResponse(user))
-	}
-	return userResponses
-}
-
 func ToCategoryResponses(categories []domain.Category) []web.CategoryResponse {
 	var categoryResponses []web.CategoryResponse
 	for _, category := range categories {
 		categoryResponses = append(categoryResponses, ToCategoryResponse(category))
 	}
 	return categoryResponses
+}
+
+func ToUserResponses(users []domain.User) []web.UserResponse {
+	var userResponses []web.UserResponse
+	for _, user := range users {
+		userResponses = append(userResponses, ToUserResponse(user))
+	}
+	return userResponses
 }
 
 func ToProductResponses(products []domain.Product) []web.ProductResponse {

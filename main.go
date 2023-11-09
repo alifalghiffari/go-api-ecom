@@ -3,9 +3,11 @@ package main
 import (
 	"fmt"
 	"net/http"
+
 	"project-workshop/go-api-ecom/app"
 	"project-workshop/go-api-ecom/controller"
 	"project-workshop/go-api-ecom/helper"
+
 	"project-workshop/go-api-ecom/middleware"
 	"project-workshop/go-api-ecom/repository"
 	"project-workshop/go-api-ecom/service"
@@ -30,7 +32,11 @@ func main() {
 	userService := service.NewUserService(userRepository, db, validate)
 	userController := controller.NewUserController(userService)
 
-	router := app.NewRouter(categoryController, productController, userController)
+	accountRepository := repository.NewUserRepository()
+	accountService := service.NewAccountService(accountRepository, db)
+	accountController := controller.NewAccountController(accountService)
+
+	router := app.NewRouter(categoryController, productController, userController, accountController)
 
 	fmt.Println("Server listening on port http://localhost:3000/")
 

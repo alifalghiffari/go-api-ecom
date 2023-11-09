@@ -1,6 +1,6 @@
 package web
 
-type LoginRequest struct {
-	Username string `validate:"required,min=1,max=100" json:"username"`
-	Password string `validate:"required,min=1,max=100" json:"password"`
+type UserLoginRequest struct {
+	Username string `json:"username" validate:"required,max=200,min=1"`
+	Password string `json:"password" validate:"required,max=200,min=1"`
 }

@@ -47,11 +47,7 @@ func setupRouter(db *sql.DB) http.Handler {
 	productService := service.NewProductService(productRepository, db, validate)
 	productController := controller.NewProductController(productService)
 
-	userRepository := repository.NewUserRepository()
-	userService := service.NewUserService(userRepository, db, validate)
-	userController := controller.NewUserController(userService)
-
-	router := app.NewRouter(categoryController, productController, userController)
+	router := app.NewRouter(categoryController, productController)
 
 	return middleware.NewAuthMiddleware(router)
 }

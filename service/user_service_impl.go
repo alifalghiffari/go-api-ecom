@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
-	"project-workshop/go-api-ecom/exception"
+	// "project-workshop/go-api-ecom/exception"
 	"project-workshop/go-api-ecom/helper"
 	"project-workshop/go-api-ecom/model/domain"
 	"project-workshop/go-api-ecom/model/web"
@@ -14,19 +14,19 @@ import (
 
 type UserServiceImpl struct {
 	UserRepository repository.UserRepository
-	DB             *sql.DB
-	Validate       *validator.Validate
+	DB			   *sql.DB
+	Validate 	   *validator.Validate
 }
 
 func NewUserService(userRepository repository.UserRepository, DB *sql.DB, validate *validator.Validate) UserService {
 	return &UserServiceImpl{
 		UserRepository: userRepository,
-		DB:             DB,
-		Validate:       validate,
+		DB: 		DB,
+		Validate: 	validate,
 	}
 }
 
-func (service *UserServiceImpl) Create(ctx context.Context, request web.UserCreateRequest) web.UserResponse {
+func (service *UserServiceImpl) Register(ctx context.Context, request web.UserCreateRequest) web.UserResponse {
 	err := service.Validate.Struct(request)
 	helper.PanicIfError(err)
 
@@ -37,16 +37,16 @@ func (service *UserServiceImpl) Create(ctx context.Context, request web.UserCrea
 	user := domain.User{
 		Username: request.Username,
 		Password: request.Password,
-		Email:    request.Email,
-		Role:     request.Role,
+		Email: request.Email,
+		Role: request.Role,
 	}
 
-	user = service.UserRepository.Save(ctx, tx, user)
+	user = service.UserRepository.Register(ctx, tx, user)
 
 	return helper.ToUserResponse(user)
 }
 
-func (service *UserServiceImpl) Update(ctx context.Context, request web.UserUpdateRequest) web.UserResponse {
+func (service *UserServiceImpl) Login(ctx context.Context, request web.UserLoginRequest) web.UserResponse {
 	err := service.Validate.Struct(request)
 	helper.PanicIfError(err)
 
@@ -54,55 +54,12 @@ func (service *UserServiceImpl) Update(ctx context.Context, request web.UserUpda
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 
-	user, err := service.UserRepository.FindById(ctx, tx, request.Id)
-	if err != nil {
-		panic(exception.NewNotFoundError(err.Error()))
+	user := domain.User{
+		Username: request.Username,
+		Password: request.Password,
 	}
 
-	user.Username = request.Username
-	user.Password = request.Password
-	user.Email = request.Email
-
-	user = service.UserRepository.Update(ctx, tx, user)
-
-	return helper.ToUserResponse(user)
-}
-
-func (service *UserServiceImpl) Delete(ctx context.Context, userId int) {
-	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
-	defer helper.CommitOrRollback(tx)
-
-	user, err := service.UserRepository.FindById(ctx, tx, userId)
-	if err != nil {
-		panic(exception.NewNotFoundError(err.Error()))
-	}
-
-	service.UserRepository.Delete(ctx, tx, user)
-}
-
-func (service *UserServiceImpl) FindById(ctx context.Context, userId int) web.UserResponse {
-	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
-	defer helper.CommitOrRollback(tx)
-
-	user, err := service.UserRepository.FindById(ctx, tx, userId)
-	if err != nil {
-		panic(exception.NewNotFoundError(err.Error()))
-	}
-
-	return helper.ToUserResponse(user)
-}
-
-func (service *UserServiceImpl) FetchUserRole(ctx context.Context, role string) web.UserResponse {
-	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
-	defer helper.CommitOrRollback(tx)
-
-	user, err := service.UserRepository.FetchUserRole(ctx, tx, role)
-	if err != nil {
-		panic(exception.NewNotFoundError(err.Error()))
-	}
+	user = service.UserRepository.Login(ctx, tx, user)
 
 	return helper.ToUserResponse(user)
 }

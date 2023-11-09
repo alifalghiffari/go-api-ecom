@@ -1,15 +1,15 @@
 package repository
 
 import (
-	"database/sql"
 	"context"
+	"database/sql"
 	"project-workshop/go-api-ecom/model/domain"
 )
 
 type UserRepository interface {
-	Save(ctx context.Context, tx *sql.Tx, user domain.User) domain.User
-	Update(ctx context.Context, tx *sql.Tx, user domain.User) domain.User
-	Delete(ctx context.Context, tx *sql.Tx, user domain.User)
+	Register(ctx context.Context, tx *sql.Tx, user domain.User) domain.User
+	Login(ctx context.Context, tx *sql.Tx, user domain.User) domain.User
 	FindById(ctx context.Context, tx *sql.Tx, userId int) (domain.User, error)
-	FetchUserRole(ctx context.Context, tx *sql.Tx, role string) (domain.User, error)
+	FindAll(ctx context.Context, tx *sql.Tx) []domain.User
+	FindByRole(ctx context.Context, tx *sql.Tx, role string) []domain.User
 }
