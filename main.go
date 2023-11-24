@@ -7,8 +7,6 @@ import (
 	"project-workshop/go-api-ecom/app"
 	"project-workshop/go-api-ecom/controller"
 	"project-workshop/go-api-ecom/helper"
-
-	"project-workshop/go-api-ecom/middleware"
 	"project-workshop/go-api-ecom/repository"
 	"project-workshop/go-api-ecom/service"
 
@@ -36,13 +34,13 @@ func main() {
 	accountService := service.NewAccountService(accountRepository, db)
 	accountController := controller.NewAccountController(accountService)
 
-	router := app.NewRouter(categoryController, productController, userController, accountController)
+	router := app.NewRouter(categoryController, productController, accountController, userController)
 
 	fmt.Println("Server listening on port http://localhost:3000/")
 
 	server := http.Server{
 		Addr:    "localhost:3000",
-		Handler: middleware.NewAuthMiddleware(router),
+		Handler: router,
 	}
 
 	err := server.ListenAndServe()

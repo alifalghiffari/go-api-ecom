@@ -8,6 +8,10 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+type AllowOrigin struct {
+	Origin string
+}
+
 func ErrorHandler(writer http.ResponseWriter, request *http.Request, err interface{}) {
 
 	if notFoundError(writer, request, err) {
