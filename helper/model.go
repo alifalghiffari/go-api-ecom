@@ -30,6 +30,7 @@ func ToProductResponse(product domain.Product) web.ProductResponse {
 		Price:       product.Price,
 		Quantity:    product.Quantity,
 		CategoryId:  product.CategoryId,
+		Category:    product.Category.Category,
 	}
 }
 

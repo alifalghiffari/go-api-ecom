@@ -42,35 +42,55 @@ func (repository *ProductRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx,
 }
 
 func (repository *ProductRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, productId int) (domain.Product, error) {
-	SQL := "select id, name, price, category_id from product where id = ?"
+	SQL := `
+		SELECT p.id, p.name, p.description, p.price, p.category_id, c.category
+		FROM product p
+		JOIN category c ON p.category_id = c.id
+		WHERE p.id = ?
+	`
 	rows, err := tx.QueryContext(ctx, SQL, productId)
-	helper.PanicIfError(err)
+	if err != nil {
+		return domain.Product{}, err // Mengembalikan product kosong dan error
+	}
 	defer rows.Close()
 
 	product := domain.Product{}
 	if rows.Next() {
-		err := rows.Scan(&product.Id, &product.Name, &product.Price, &product.Category.Id)
-		helper.PanicIfError(err)
-		return product, nil
-	} else {
-		return product, errors.New("product is not found")
+		err := rows.Scan(&product.Id, &product.Name, &product.Description, &product.Price, &product.CategoryId, &product.Category.Category)
+		if err != nil {
+			return domain.Product{}, err // Mengembalikan product kosong dan error jika terjadi kesalahan saat pemindaian rows
+		}
+		return product, nil // Mengembalikan product yang ditemukan tanpa error
 	}
+
+	return domain.Product{}, errors.New("product is not found") // Jika tidak ada baris yang ditemukan, kembalikan error bahwa produk tidak ditemukan
 }
 
 func (repository *ProductRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.Product {
-	SQL := "select id, name, price, category_id from product"
+	SQL := `
+		SELECT p.id, p.name, p.description, p.price, p.category_id, c.category
+		FROM product p
+		JOIN category c ON p.category_id = c.id
+	`
 	rows, err := tx.QueryContext(ctx, SQL)
-	helper.PanicIfError(err)
+	if err != nil {
+		return nil // Mengembalikan nil slice product dan error
+	}
 	defer rows.Close()
 
 	var products []domain.Product
 	for rows.Next() {
 		product := domain.Product{}
-		err := rows.Scan(&product.Id, &product.Name, &product.Price, &product.Category.Id)
-		helper.PanicIfError(err)
-
-		products = append(products, product)
+		err := rows.Scan(&product.Id, &product.Name, &product.Description, &product.Price, &product.CategoryId, &product.Category.Category)
+		if err != nil {
+			return nil // Mengembalikan nil slice product dan error jika terjadi kesalahan saat pemindaian rows
+		}
+		products = append(products, product) // Menambahkan product ke slice products
 	}
 
-	return products
+	if len(products) == 0 {
+		return nil // Jika tidak ada produk yang ditemukan, kembalikan error
+	}
+
+	return products // Mengembalikan slice product dan tanpa error
 }

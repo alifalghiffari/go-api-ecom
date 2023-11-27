@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	_ "github.com/go-sql-driver/mysql"
+	"github.com/rs/cors"
 )
 
 func main() {
@@ -36,11 +37,20 @@ func main() {
 
 	router := app.NewRouter(categoryController, productController, accountController, userController)
 
+	corsHandler := cors.New(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:8080"}, // Adjust the allowed origins according to your needs
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"*"},
+		AllowCredentials: true,
+	})
+
+	handler := corsHandler.Handler(router)
+
 	fmt.Println("Server listening on port http://localhost:3000/")
 
 	server := http.Server{
 		Addr:    "localhost:3000",
-		Handler: router,
+		Handler: handler,
 	}
 
 	err := server.ListenAndServe()

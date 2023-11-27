@@ -13,6 +13,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/golang-jwt/jwt/v4"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserServiceImpl struct {
@@ -43,9 +44,14 @@ func (service *UserServiceImpl) Register(ctx context.Context, request web.UserCr
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
 
+	hashedPassword, err := HashPassword(request.Password)
+	if err != nil {
+		helper.PanicIfError(err)
+	}
+
 	user := domain.User{
 		Username: request.Username,
-		Password: request.Password,
+		Password: hashedPassword, // Use the hashed password
 		Email:    request.Email,
 		Role:     request.Role,
 	}
@@ -54,6 +60,7 @@ func (service *UserServiceImpl) Register(ctx context.Context, request web.UserCr
 
 	return helper.ToUserResponse(user)
 }
+
 
 func (service *UserServiceImpl) Login(ctx context.Context, request web.UserLoginRequest) web.UserResponse {
 	err := service.Validate.Struct(request)
@@ -113,4 +120,13 @@ func SetCookie(token string) *http.Cookie {
 	}
 
 	return cookie
+}
+
+func HashPassword(password string) (string, error) {
+	// Generate a hash of the password
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hashedPassword), nil
 }
