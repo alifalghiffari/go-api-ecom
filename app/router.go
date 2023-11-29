@@ -12,11 +12,19 @@ import (
 func NewRouter(categoryController controller.CategoryController,
 	productController controller.ProductController,
 	accountController controller.AccountController,
-	userController controller.UserController) *httprouter.Router {
+	userController controller.UserController,
+	cartController controller.CartController) *httprouter.Router {
 	router := httprouter.New()
 
 	// Middleware
 	authMiddleware := middleware.AuthMiddleware{}
+
+	// Keranjang
+	router.POST("/api/carts", authMiddleware.ApplyMiddleware(cartController.AddToCart))
+	router.PUT("/api/carts", authMiddleware.ApplyMiddleware(cartController.UpdateCart))
+	router.DELETE("/api/carts", authMiddleware.ApplyMiddleware(cartController.RemoveFromCart))
+	router.GET("/api/carts", authMiddleware.ApplyMiddleware(cartController.GetItemsInCart))
+	router.GET("/api/carts/:cartId", authMiddleware.ApplyMiddleware(cartController.FindById))
 
 	// Kategori
 	router.GET("/api/categories", (categoryController.FindAll))

@@ -35,7 +35,11 @@ func main() {
 	accountService := service.NewAccountService(accountRepository, db)
 	accountController := controller.NewAccountController(accountService)
 
-	router := app.NewRouter(categoryController, productController, accountController, userController)
+	cartRepository := repository.NewCartRepository()
+	cartService := service.NewCartService(cartRepository, db, validate)
+	cartController := controller.NewCartController(cartService)
+
+	router := app.NewRouter(categoryController, productController, accountController, userController, cartController)
 
 	corsHandler := cors.New(cors.Options{
 		AllowedOrigins:   []string{"http://localhost:8080"}, // Adjust the allowed origins according to your needs

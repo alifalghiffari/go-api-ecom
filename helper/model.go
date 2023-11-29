@@ -9,6 +9,7 @@ func ToCategoryResponse(category domain.Category) web.CategoryResponse {
 	return web.CategoryResponse{
 		Id:       category.Id,
 		Category: category.Category,
+		Products: ToProductResponses(category.Products),
 	}
 }
 
@@ -34,6 +35,16 @@ func ToProductResponse(product domain.Product) web.ProductResponse {
 	}
 }
 
+func ToCartResponse(cart domain.Cart) web.CartResponse {
+	return web.CartResponse{
+		Id:        cart.Id,
+		UserId:    cart.UserId,
+		ProductId: cart.ProductId,
+		Quantity:  cart.Quantity,
+		Product:   ToProductResponse(cart.Product),
+	}
+}
+
 func ToCategoryResponses(categories []domain.Category) []web.CategoryResponse {
 	var categoryResponses []web.CategoryResponse
 	for _, category := range categories {
@@ -56,4 +67,12 @@ func ToProductResponses(products []domain.Product) []web.ProductResponse {
 		productResponses = append(productResponses, ToProductResponse(product))
 	}
 	return productResponses
+}
+
+func ToCartResponses(carts []domain.Cart) []web.CartResponse {
+	var cartResponses []web.CartResponse
+	for _, cart := range carts {
+		cartResponses = append(cartResponses, ToCartResponse(cart))
+	}
+	return cartResponses
 }

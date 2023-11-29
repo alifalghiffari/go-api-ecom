@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"errors"
 	"project-workshop/go-api-ecom/helper"
 	"project-workshop/go-api-ecom/model/domain"
 )
@@ -42,19 +41,25 @@ func (repository *CategoryRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx
 }
 
 func (repository *CategoryRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, categoryId int) (domain.Category, error) {
-	SQL := "select id, category from category where id = ?"
+	SQL := `
+		SELECT c.id, c.category, p.id AS product_id, p.name AS product_name
+		FROM category c
+		LEFT JOIN product p ON c.id = p.category_id
+		WHERE c.id = ?
+	`
+
 	rows, err := tx.QueryContext(ctx, SQL, categoryId)
 	helper.PanicIfError(err)
-	defer rows.Close()
 
-	category := domain.Category{}
-	if rows.Next() {
-		err := rows.Scan(&category.Id, &category.Category)
+	var category domain.Category
+	category.Products = make([]domain.Product, 0)
+	for rows.Next() {
+		product := domain.Product{}
+		err := rows.Scan(&category.Id, &category.Category, &product.Id, &product.Name)
 		helper.PanicIfError(err)
-		return category, nil
-	} else {
-		return category, errors.New("category is not found")
+		category.Products = append(category.Products, product)
 	}
+	return category, nil
 }
 
 func (repository *CategoryRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.Category {
