@@ -35,14 +35,18 @@ func main() {
 	accountService := service.NewAccountService(accountRepository, db)
 	accountController := controller.NewAccountController(accountService)
 
-	cartRepository := repository.NewCartRepository()
-	cartService := service.NewCartService(cartRepository, db, validate)
+	cartRepository := repository.NewCartRepositoryImpl()
+	cartService := service.NewCartService(cartRepository, userRepository, productRepository, db, validate)
 	cartController := controller.NewCartController(cartService)
 
-	router := app.NewRouter(categoryController, productController, accountController, userController, cartController)
+	orderRepository := repository.NewOrderRepositoryImpl()
+	orderService := service.NewOrderService(orderRepository, userRepository, cartRepository, db, validate)
+	orderController := controller.NewOrderController(orderService)
+
+	router := app.NewRouter(categoryController, productController, accountController, userController, cartController, orderController)
 
 	corsHandler := cors.New(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:8080"}, // Adjust the allowed origins according to your needs
+		AllowedOrigins:   []string{"http://localhost:8080"},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"*"},
 		AllowCredentials: true,

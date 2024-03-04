@@ -5,7 +5,7 @@ import (
 	"project-workshop/go-api-ecom/helper"
 	"project-workshop/go-api-ecom/model/web"
 	"project-workshop/go-api-ecom/service"
-	"strconv"
+	//"strconv"
 
 	"github.com/julienschmidt/httprouter"
 )
@@ -21,11 +21,9 @@ func NewAccountController(accountService service.AccountService) AccountControll
 }
 
 func (controller *AccountControllerImpl) UserDetailByID(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
-	accountId := params.ByName("accountId")
-	id, err := strconv.Atoi(accountId)
-	helper.PanicIfError(err)
+	userID := request.Context().Value("userId").(int)
 
-	accountResponse := controller.AccountService.UserDetailByID(request.Context(), id)
+	accountResponse := controller.AccountService.UserDetailByID(request.Context(), userID)
 	webResponse := web.WebResponse{
 		Code:   200,
 		Status: "OK",

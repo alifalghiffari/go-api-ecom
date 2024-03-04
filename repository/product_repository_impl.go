@@ -43,7 +43,7 @@ func (repository *ProductRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx,
 
 func (repository *ProductRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, productId int) (domain.Product, error) {
 	SQL := `
-		SELECT p.id, p.name, p.description, p.price, p.category_id, c.category
+		SELECT p.id, p.name, p.image, p.description, p.price, p.category_id, c.category
 		FROM product p
 		JOIN category c ON p.category_id = c.id
 		WHERE p.id = ?
@@ -56,7 +56,7 @@ func (repository *ProductRepositoryImpl) FindById(ctx context.Context, tx *sql.T
 
 	product := domain.Product{}
 	if rows.Next() {
-		err := rows.Scan(&product.Id, &product.Name, &product.Description, &product.Price, &product.CategoryId, &product.Category.Category)
+		err := rows.Scan(&product.Id, &product.Name, &product.Image, &product.Description, &product.Price, &product.CategoryId, &product.Category.Category)
 		if err != nil {
 			return domain.Product{}, err // Mengembalikan product kosong dan error jika terjadi kesalahan saat pemindaian rows
 		}
@@ -68,7 +68,7 @@ func (repository *ProductRepositoryImpl) FindById(ctx context.Context, tx *sql.T
 
 func (repository *ProductRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.Product {
 	SQL := `
-		SELECT p.id, p.name, p.description, p.price, p.category_id, c.category
+		SELECT p.id, p.name, p.image, p.description, p.price, p.category_id, c.category
 		FROM product p
 		JOIN category c ON p.category_id = c.id
 	`
@@ -81,7 +81,7 @@ func (repository *ProductRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx
 	var products []domain.Product
 	for rows.Next() {
 		product := domain.Product{}
-		err := rows.Scan(&product.Id, &product.Name, &product.Description, &product.Price, &product.CategoryId, &product.Category.Category)
+		err := rows.Scan(&product.Id, &product.Name, &product.Image, &product.Description, &product.Price, &product.CategoryId, &product.Category.Category)
 		if err != nil {
 			return nil // Mengembalikan nil slice product dan error jika terjadi kesalahan saat pemindaian rows
 		}

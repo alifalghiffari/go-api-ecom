@@ -6,9 +6,10 @@ import (
 )
 
 type CartService interface {
-	AddToCart(ctx context.Context, request web.CartCreateRequest) web.CartResponse
-	UpdateCart(ctx context.Context, request web.CartUpdateRequest) web.CartResponse
-	RemoveFromCart(ctx context.Context, request web.CartRemoveRequest)
-	GetItemsInCart(ctx context.Context, userId int) []web.CartResponse
-	FindById(ctx context.Context, id int) web.CartResponse
+	AddToCart(ctx context.Context, request web.CartCreateRequest, userId int) web.CartResponse
+	UpdateCart(ctx context.Context, request web.CartUpdateRequest, userId int) web.CartResponse
+	DeleteCart(ctx context.Context, request web.CartDeleteRequest, userId int) web.CartResponse
+	FindById(ctx context.Context, cartId int) web.CartResponse
+	FindByUserId(ctx context.Context, userId int) []web.CartResponse
+	FindAll(ctx context.Context) []web.CartResponse
 }

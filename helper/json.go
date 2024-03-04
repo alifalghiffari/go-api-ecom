@@ -17,3 +17,8 @@ func WriteToResponseBody(writer http.ResponseWriter, response interface{}) {
 	err := encoder.Encode(response)
 	PanicIfError(err)
 }
+
+func WriteResponse(writer http.ResponseWriter, httpStatus int, response interface{}) {
+	writer.WriteHeader(httpStatus)
+	WriteToResponseBody(writer, response)
+}

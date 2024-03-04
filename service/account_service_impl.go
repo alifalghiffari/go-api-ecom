@@ -6,7 +6,6 @@ import (
 	"project-workshop/go-api-ecom/helper"
 	"project-workshop/go-api-ecom/model/web"
 	"project-workshop/go-api-ecom/repository"
-
 	// "github.com/go-playground/validator/v10"
 )
 
@@ -22,7 +21,7 @@ func NewAccountService(userRepository repository.UserRepository, DB *sql.DB) Acc
 	}
 }
 
-func (service *AccountServiceImpl) UserDetailByID(ctx context.Context, userID int) web.UserResponse {
+func (service *AccountServiceImpl) UserDetailByID(ctx context.Context, userID int) web.AccountResponse {
 	tx, err := service.DB.Begin()
 	helper.PanicIfError(err)
 	defer helper.CommitOrRollback(tx)
@@ -32,5 +31,5 @@ func (service *AccountServiceImpl) UserDetailByID(ctx context.Context, userID in
 		panic(err)
 	}
 
-	return helper.ToUserResponse(user)
+	return helper.ToAccountResponse(user)
 }

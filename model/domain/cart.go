@@ -4,6 +4,6 @@ type Cart struct {
 	Id        int
 	UserId    int
 	ProductId int
-	Product   Product
+	Product   []Product
 	Quantity  int
 }

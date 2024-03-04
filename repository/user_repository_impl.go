@@ -30,8 +30,8 @@ func (repository *UserRepositoryImpl) Register(ctx context.Context, tx *sql.Tx, 
 }
 
 func (repository *UserRepositoryImpl) Login(ctx context.Context, tx *sql.Tx, user domain.User) domain.User {
-	SQL := "select id, username, password, email, role from user where username = ? and password = ?"
-	rows, err := tx.QueryContext(ctx, SQL, user.Username, user.Password)
+	SQL := "select id, username, password, email, role from user where username = ?"
+	rows, err := tx.QueryContext(ctx, SQL, user.Username)
 	if err != nil {
 		panic(err)
 	}
@@ -90,7 +90,7 @@ func (repository *UserRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) [
 	return users
 }
 
-func (repository *UserRepositoryImpl) FindByRole(ctx context.Context, tx *sql.Tx, role string) []domain.User {
+func (repository *UserRepositoryImpl) FindByRole(ctx context.Context, tx *sql.Tx, role bool) (domain.User, error) {
 	SQL := "select id, username, password, email, role from user where role = ?"
 	rows, err := tx.QueryContext(ctx, SQL, role)
 	if err != nil {
@@ -98,16 +98,34 @@ func (repository *UserRepositoryImpl) FindByRole(ctx context.Context, tx *sql.Tx
 	}
 	defer rows.Close()
 
-	var users []domain.User
-	for rows.Next() {
-		user := domain.User{}
+	user := domain.User{}
+	if rows.Next() {
 		err := rows.Scan(&user.Id, &user.Username, &user.Password, &user.Email, &user.Role)
 		if err != nil {
 			panic(err)
 		}
-
-		users = append(users, user)
+		return user, nil
+	} else {
+		return user, err
 	}
+}
 
-	return users
+func (repository *UserRepositoryImpl) FindByUsername(ctx context.Context, tx *sql.Tx, username string) (domain.User, error) {
+	SQL := "select id, username, password, email, role from user where username = ?"
+	rows, err := tx.QueryContext(ctx, SQL, username)
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	user := domain.User{}
+	if rows.Next() {
+		err := rows.Scan(&user.Id, &user.Username, &user.Password, &user.Email, &user.Role)
+		if err != nil {
+			panic(err)
+		}
+		return user, nil
+	} else {
+		return user, err
+	}
 }

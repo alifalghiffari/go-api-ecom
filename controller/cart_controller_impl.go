@@ -20,45 +20,86 @@ func NewCartController(cartService service.CartService) CartController {
 	}
 }
 
-func (controller *CartControllerImpl) AddToCart(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	request := web.CartCreateRequest{}
-	helper.ReadFromRequestBody(r, &request)
+func (controller *CartControllerImpl) AddToCart(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	cartCreateRequest := web.CartCreateRequest{}
+	userId := request.Context().Value("userId").(int)
+	helper.ReadFromRequestBody(request, &cartCreateRequest)
 
-	response := controller.CartService.AddToCart(r.Context(), request)
+	cartResponse := controller.CartService.AddToCart(request.Context(), cartCreateRequest, userId)
+	webResponse := web.WebResponse{
+		Code:   200,
+		Status: "OK",
+		Data:   cartResponse,
+	}
 
-	helper.WriteToResponseBody(w, response)
+	helper.WriteToResponseBody(writer, webResponse)
 }
 
-func (controller *CartControllerImpl) UpdateCart(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	request := web.CartUpdateRequest{}
-	helper.ReadFromRequestBody(r, &request)
+func (controller *CartControllerImpl) UpdateCart(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	cartUpdateRequest := web.CartUpdateRequest{}
+	userId := request.Context().Value("userId").(int)
+	helper.ReadFromRequestBody(request, &cartUpdateRequest)
 
-	response := controller.CartService.UpdateCart(r.Context(), request)
+	cartResponse := controller.CartService.UpdateCart(request.Context(), cartUpdateRequest, userId)
+	webResponse := web.WebResponse{
+		Code:   200,
+		Status: "OK",
+		Data:   cartResponse,
+	}
 
-	helper.WriteToResponseBody(w, response)
+	helper.WriteToResponseBody(writer, webResponse)
 }
 
-func (controller *CartControllerImpl) RemoveFromCart(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	request := web.CartRemoveRequest{}
-	helper.ReadFromRequestBody(r, &request)
+func (controller *CartControllerImpl) DeleteCart(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	cartDeleteRequest := web.CartDeleteRequest{}
+	userId := request.Context().Value("userId").(int)
+	helper.ReadFromRequestBody(request, &cartDeleteRequest)
 
-	controller.CartService.RemoveFromCart(r.Context(), request)
+	cartResponse := controller.CartService.DeleteCart(request.Context(), cartDeleteRequest, userId)
+	webResponse := web.WebResponse{
+		Code:   200,
+		Status: "OK",
+		Data:   cartResponse,
+	}
 
-	w.WriteHeader(http.StatusOK)
+	helper.WriteToResponseBody(writer, webResponse)
 }
 
-func (controller *CartControllerImpl) GetItemsInCart(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	userId, _ := strconv.Atoi(r.URL.Query().Get("userId"))
+func (controller *CartControllerImpl) FindById(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	cartId := params.ByName("cartId")
+	id, err := strconv.Atoi(cartId)
+	helper.PanicIfError(err)
 
-	response := controller.CartService.GetItemsInCart(r.Context(), userId)
+	cartResponse := controller.CartService.FindById(request.Context(), id)
+	webResponse := web.WebResponse{
+		Code:   200,
+		Status: "OK",
+		Data:   cartResponse,
+	}
 
-	helper.WriteToResponseBody(w, response)
+	helper.WriteToResponseBody(writer, webResponse)
 }
 
-func (controller *CartControllerImpl) FindById(w http.ResponseWriter, r *http.Request, params httprouter.Params) {
-	id, _ := strconv.Atoi(r.URL.Query().Get("id"))
+func (controller *CartControllerImpl) FindByUserId(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	userId := request.Context().Value("userId").(int)
 
-	response := controller.CartService.FindById(r.Context(), id)
+	cartResponse := controller.CartService.FindByUserId(request.Context(), userId)
+	webResponse := web.WebResponse{
+		Code:   200,
+		Status: "OK",
+		Data:   cartResponse,
+	}
 
-	helper.WriteToResponseBody(w, response)
+	helper.WriteToResponseBody(writer, webResponse)
+}
+
+func (controller *CartControllerImpl) FindAll(writer http.ResponseWriter, request *http.Request, params httprouter.Params) {
+	cartResponse := controller.CartService.FindAll(request.Context())
+	webResponse := web.WebResponse{
+		Code:   200,
+		Status: "OK",
+		Data:   cartResponse,
+	}
+
+	helper.WriteToResponseBody(writer, webResponse)
 }

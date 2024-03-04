@@ -42,12 +42,11 @@ func (repository *CategoryRepositoryImpl) Delete(ctx context.Context, tx *sql.Tx
 
 func (repository *CategoryRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, categoryId int) (domain.Category, error) {
 	SQL := `
-		SELECT c.id, c.category, p.id AS product_id, p.name AS product_name
+		SELECT c.id, c.category, c.icon, p.id AS product_id, p.name AS product_name
 		FROM category c
 		LEFT JOIN product p ON c.id = p.category_id
 		WHERE c.id = ?
 	`
-
 	rows, err := tx.QueryContext(ctx, SQL, categoryId)
 	helper.PanicIfError(err)
 
@@ -55,7 +54,7 @@ func (repository *CategoryRepositoryImpl) FindById(ctx context.Context, tx *sql.
 	category.Products = make([]domain.Product, 0)
 	for rows.Next() {
 		product := domain.Product{}
-		err := rows.Scan(&category.Id, &category.Category, &product.Id, &product.Name)
+		err := rows.Scan(&category.Id, &category.Category, &category.Icon, &product.Id, &product.Name)
 		helper.PanicIfError(err)
 		category.Products = append(category.Products, product)
 	}
@@ -63,7 +62,7 @@ func (repository *CategoryRepositoryImpl) FindById(ctx context.Context, tx *sql.
 }
 
 func (repository *CategoryRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.Category {
-	SQL := "select id, category from category"
+	SQL := "select id, category, icon from category"
 	rows, err := tx.QueryContext(ctx, SQL)
 	helper.PanicIfError(err)
 	defer rows.Close()
@@ -71,7 +70,7 @@ func (repository *CategoryRepositoryImpl) FindAll(ctx context.Context, tx *sql.T
 	var categories []domain.Category
 	for rows.Next() {
 		category := domain.Category{}
-		err := rows.Scan(&category.Id, &category.Category)
+		err := rows.Scan(&category.Id, &category.Category, &category.Icon)
 		helper.PanicIfError(err)
 		categories = append(categories, category)
 	}

@@ -39,9 +39,19 @@ func (controller *UserControllerImpl) Login(writer http.ResponseWriter, request 
 	userLoginRequest := web.UserLoginRequest{}
 	helper.ReadFromRequestBody(request, &userLoginRequest)
 
-	userResponse := controller.UserService.Login(request.Context(), userLoginRequest)
+	userResponse, err := controller.UserService.Login(request.Context(), userLoginRequest)
+	if err != nil {
+		webResponse := web.WebResponse{
+			Code:   http.StatusInternalServerError,
+			Status: "Error",
+			Data:   err.Error(),
+		}
+		helper.WriteToResponseBody(writer, webResponse)
+		return
+	}
+
 	webResponse := web.WebResponse{
-		Code:   200,
+		Code:   http.StatusOK,
 		Status: "OK",
 		Data:   userResponse,
 	}

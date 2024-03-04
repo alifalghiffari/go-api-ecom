@@ -3,7 +3,7 @@ package service
 import (
 	"context"
 	"database/sql"
-	"net/http"
+	"fmt"
 	"time"
 
 	"project-workshop/go-api-ecom/helper"
@@ -24,8 +24,10 @@ type UserServiceImpl struct {
 }
 
 type Claims struct {
-	UserID string `json:"user_id"`
-	jwt.StandardClaims
+	Username string
+	UserID   int
+	Role     bool
+	jwt.RegisteredClaims
 }
 
 func NewUserService(userRepository repository.UserRepository, DB *sql.DB, validate *validator.Validate) UserService {
@@ -38,20 +40,27 @@ func NewUserService(userRepository repository.UserRepository, DB *sql.DB, valida
 
 func (service *UserServiceImpl) Register(ctx context.Context, request web.UserCreateRequest) web.UserResponse {
 	err := service.Validate.Struct(request)
-	helper.PanicIfError(err)
+	if err != nil {
+		fmt.Println("Validation error:", err)
+		return web.UserResponse{} // or return an error response
+	}
 
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	if err != nil {
+		fmt.Println("DB Begin error:", err)
+		return web.UserResponse{} // or return an error response
+	}
 	defer helper.CommitOrRollback(tx)
 
 	hashedPassword, err := HashPassword(request.Password)
 	if err != nil {
-		helper.PanicIfError(err)
+		fmt.Println("HashPassword error:", err)
+		return web.UserResponse{} // or return an error response
 	}
 
 	user := domain.User{
 		Username: request.Username,
-		Password: hashedPassword, // Use the hashed password
+		Password: hashedPassword,
 		Email:    request.Email,
 		Role:     request.Role,
 	}
@@ -61,72 +70,75 @@ func (service *UserServiceImpl) Register(ctx context.Context, request web.UserCr
 	return helper.ToUserResponse(user)
 }
 
-
-func (service *UserServiceImpl) Login(ctx context.Context, request web.UserLoginRequest) web.UserResponse {
+func (service *UserServiceImpl) Login(ctx context.Context, request web.UserLoginRequest) (web.UserResponse, error) {
 	err := service.Validate.Struct(request)
-	helper.PanicIfError(err)
+	if err != nil {
+		return web.UserResponse{}, err
+	}
 
 	tx, err := service.DB.Begin()
-	helper.PanicIfError(err)
+	if err != nil {
+		return web.UserResponse{}, err
+	}
 	defer helper.CommitOrRollback(tx)
 
-	user := domain.User{
-		Username: request.Username,
-		Password: request.Password,
-	}
-
-	user = service.UserRepository.Login(ctx, tx, user)
-
-	// Generate token
-	token, err := GenerateToken(user.Username, "yourSecretKey")
+	user, err := service.UserRepository.FindByUsername(ctx, tx, request.Username)
 	if err != nil {
-		helper.PanicIfError(err)
+		return web.UserResponse{}, err
 	}
 
-	// Add token to response
+	err = ComparePassword(user.Password, request.Password)
+	if err != nil {
+		return web.UserResponse{}, err // Passwords don't match
+	}
+
+	token, err := GenerateToken(user.Username, user.Role, user.Id, "yourSecretKey")
+	if err != nil {
+		return web.UserResponse{}, err
+	}
+
 	userResponse := helper.ToUserResponse(user)
 	userResponse.Token = token
 
-	return userResponse
+	return userResponse, nil
 }
 
-func GenerateToken(userID string, secretKey string) (string, error) {
-	// Set claims
-	claims := Claims{
-		UserID: userID,
-		StandardClaims: jwt.StandardClaims{
-			ExpiresAt: time.Now().Add(time.Hour * 1).Unix(),
+// generate token with claims username and role
+func GenerateToken(username string, role bool, userId int, secretKey string) (string, error) {
+	// Set custom claims
+	claims := &Claims{
+		Username: username,
+		UserID:   userId,
+		Role:     role,
+		RegisteredClaims: jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
 		},
 	}
 
-	// Create token
+	// Declare the token with the algorithm used for signing, and the claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	// Sign the token with the secret key
-	tokenString, err := token.SignedString([]byte(secretKey))
+	// Create the JWT string
+	tokenString, err := token.SignedString([]byte("secretKey"))
 	if err != nil {
-		return "/", err
+		return "", err
 	}
 
 	return tokenString, nil
 }
 
-func SetCookie(token string) *http.Cookie {
-	cookie := &http.Cookie{
-		Name:    "token",
-		Value:   token,
-		Expires: time.Now().Add(1 * time.Hour),
-		Path:    "/",
-	}
-
-	return cookie
-}
-
 func HashPassword(password string) (string, error) {
-	// Generate a hash of the password
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", err
 	}
 	return string(hashedPassword), nil
+}
+
+func ComparePassword(hashedPassword string, password string) error {
+	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
+	if err != nil {
+		return err
+	}
+	return nil
 }

@@ -10,15 +10,19 @@ import (
 type CartRepositoryImpl struct {
 }
 
-func NewCartRepository() CartRepository {
+func NewCartRepositoryImpl() CartRepository {
 	return &CartRepositoryImpl{}
 }
 
 func (repository *CartRepositoryImpl) AddToCart(ctx context.Context, tx *sql.Tx, cart domain.Cart) domain.Cart {
-	SQL := "insert into cart(user_id, product_id, quantity) values (?, ?, ?)"
-	_, err := tx.ExecContext(ctx, SQL, cart.UserId, cart.ProductId, cart.Quantity)
+	SQL := "insert into cart(userId, product_id, quantity) values (?, ?, ?)"
+	result, err := tx.ExecContext(ctx, SQL, cart.UserId, cart.ProductId, cart.Quantity)
 	helper.PanicIfError(err)
 
+	id, err := result.LastInsertId()
+	helper.PanicIfError(err)
+
+	cart.Id = int(id)
 	return cart
 }
 
@@ -30,50 +34,78 @@ func (repository *CartRepositoryImpl) UpdateCart(ctx context.Context, tx *sql.Tx
 	return cart
 }
 
-func (repository *CartRepositoryImpl) RemoveFromCart(ctx context.Context, tx *sql.Tx, cart domain.Cart) {
-	SQL := "delete from cart where user_id = ? and product_id = ?"
-	_, err := tx.ExecContext(ctx, SQL, cart.UserId, cart.ProductId)
+func (repository *CartRepositoryImpl) DeleteCart(ctx context.Context, tx *sql.Tx, cart domain.Cart) domain.Cart {
+	SQL := "delete from cart where id = ?"
+	_, err := tx.ExecContext(ctx, SQL, cart.Id)
 	helper.PanicIfError(err)
+
+	return cart
 }
 
-func (repository *CartRepositoryImpl) GetItemsInCart(ctx context.Context, tx *sql.Tx, userId int) []domain.Cart {
+// FindById fetches cart items based on a slice of cart IDs
+func (repository *CartRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, cartId []int) ([]domain.Cart, error) {
 	SQL := `
-		SELECT c.id, c.user_id, c.product_id, c.quantity, p.name AS product_name, p.price AS product_price
+		SELECT c.id, c.userId, c.product_id, c.quantity, p.name, p.price
 		FROM cart c
-		LEFT JOIN product p ON c.product_id = p.id
-		WHERE c.user_id = ?
+		INNER JOIN product p ON c.product_id = p.id
+		WHERE c.id IN (?)
 	`
-
-	rows, err := tx.QueryContext(ctx, SQL, userId)
+	rows, err := tx.QueryContext(ctx, SQL, cartId)
 	helper.PanicIfError(err)
 
 	var carts []domain.Cart
 	for rows.Next() {
 		cart := domain.Cart{}
-		err := rows.Scan(&cart.Id, &cart.UserId, &cart.ProductId, &cart.Quantity, &cart.Product.Name, &cart.Product.Price)
+		product := domain.Product{}
+		err := rows.Scan(&cart.Id, &cart.UserId, &cart.ProductId, &cart.Quantity, &product.Name, &product.Price)
+		helper.PanicIfError(err)
+		cart.Product = append(cart.Product, product)
+		carts = append(carts, cart)
+	}
+
+	return carts, nil
+}
+
+func (repository *CartRepositoryImpl) FindByUserId(ctx context.Context, tx *sql.Tx, userId int) ([]domain.Cart, error) {
+	SQL := `
+		SELECT c.id, c.userId, c.product_id, c.quantity, p.name, p.price
+		FROM cart c
+		LEFT JOIN product p ON c.product_id = p.id
+		WHERE c.userId = ?
+    `
+	rows, err := tx.QueryContext(ctx, SQL, userId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var carts []domain.Cart
+	for rows.Next() {
+		cart := domain.Cart{}
+		product := domain.Product{}
+		if err := rows.Scan(&cart.Id, &cart.UserId, &product.Id, &cart.Quantity, &product.Name, &product.Price); err != nil {
+			return nil, err
+		}
+		cart.Product = append(cart.Product, product)
+		carts = append(carts, cart)
+	}
+
+	return carts, nil
+}
+
+func (repository *CartRepositoryImpl) FindAll(ctx context.Context, tx *sql.Tx) []domain.Cart {
+	SQL := "select id, userId, product_id, quantity from cart"
+	rows, err := tx.QueryContext(ctx, SQL)
+	helper.PanicIfError(err)
+	defer rows.Close()
+
+	var carts []domain.Cart
+	for rows.Next() {
+		cart := domain.Cart{}
+		err := rows.Scan(&cart.Id, &cart.UserId, &cart.ProductId, &cart.Quantity)
 		helper.PanicIfError(err)
 		carts = append(carts, cart)
 	}
 
 	return carts
-}
-
-func (repository *CartRepositoryImpl) FindById(ctx context.Context, tx *sql.Tx, id int) domain.Cart {
-	SQL := `
-		SELECT c.id, c.user_id, c.product_id, c.quantity, p.name AS product_name, p.price AS product_price
-		FROM cart c
-		LEFT JOIN product p ON c.product_id = p.id
-		WHERE c.id = ?
-	`
-
-	rows, err := tx.QueryContext(ctx, SQL, id)
-	helper.PanicIfError(err)
-
-	cart := domain.Cart{}
-	if rows.Next() {
-		err := rows.Scan(&cart.Id, &cart.UserId, &cart.ProductId, &cart.Quantity, &cart.Product.Name, &cart.Product.Price)
-		helper.PanicIfError(err)
-	}
-
-	return cart
 }

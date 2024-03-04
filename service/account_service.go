@@ -6,5 +6,5 @@ import (
 )
 
 type AccountService interface {
-    UserDetailByID(ctx context.Context, userID int) web.UserResponse
+    UserDetailByID(ctx context.Context, userID int) web.AccountResponse
 }
